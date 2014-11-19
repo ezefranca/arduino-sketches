@@ -1,0 +1,49 @@
+// include the library code:
+
+//http://www.evola.fr/en/water-flow-sensor-g34-p-350.html
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 7);
+
+volatile int NbTopsFan; //measuring the rising edges of the signal
+int Calc;                               
+int hallsensor = 2;    //The pin location of the sensor
+unsigned long tempo = 0;
+int Volume = 0;
+
+void rpm ()     //This is the function that the interupt calls 
+{ 
+  NbTopsFan++;  //This function measures the rising and falling edge of the hall effect sensors signal
+} 
+
+void setup() {
+  pinMode(hallsensor, INPUT); //initializes digital pin 2 as an input
+  Serial.begin(9600); //This is the setup function where the serial port is initialised,
+  attachInterrupt(0, rpm, RISING); //and the interrupt is attached
+  // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("  >_Economiza_<");
+}
+
+void loop() {
+  
+    NbTopsFan = 0;   //Set NbTops to 0 ready for calculations
+  sei();      //Enables interrupts
+  delay (1000);   //Wait 1 second
+  tempo = millis();
+  tempo = tempo / 1000;
+  cli();      //Disable interrupts
+  Calc = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate Ardin L/hour 
+  Volume = (Calc * tempo) / 3600;
+  //Serial.println(Calc); //Prints the number calculated above
+ // Serial.print ("  Litros\r\n"); //Prints "L/hour" and returns a  new line
+  Serial.println(Volume);
+  // set the cursor to column 0, line 1
+  // (note: line 1 is the second row, since counting begins with 0):
+  lcd.setCursor(0, 1);
+  // print the number of seconds since reset:
+  lcd.print(Volume);
+  lcd.print("litros");
+}
